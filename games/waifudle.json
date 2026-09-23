@@ -1,0 +1,33 @@
+{
+  "settings": {
+    "name": "Waifudle",
+    "description": "Guess the anime character. Buy optional hints by spending attempts.",
+    "image": "https://thicc-uwu.mywaifulist.moe/waifus/rem-re-zero-starting-life-in-another-world/KyJTfYfZFTfVgZJGAOxyv3QkzVoM6rlOPQBZYLBZ.jpg?class=thumbnail",
+    "version": "1.0.0",
+    "author": "Creatdle",
+    "max_attempts": 10,
+    "hints": {
+      "type": "buy",
+      "options": [
+        { "category": "series", "cost": 1 },
+        { "category": "hair", "cost": 2 },
+        { "category": "debut", "cost": 2 }
+      ]
+    }
+  },
+  "categories": [
+    { "name": "name", "role": "main", "search": true, "width": "auto" },
+    { "name": "series", "type": "text", "width": "auto" },
+    { "name": "hair", "label": "Hair color", "type": "text", "width": 130 },
+    { "name": "role", "type": "text", "width": "1fr" },
+    { "name": "debut", "label": "Anime debut", "type": "number", "closeness": 2, "hl": true, "width": 125 }
+  ],
+  "items": [
+    { "name": "Megumin", "series": "KonoSuba", "hair": "Brown", "role": "Mage", "debut": 2016 },
+    { "name": "Rem", "series": "Re:Zero", "hair": "Blue", "role": "Maid", "debut": 2016 },
+    { "name": "Asuna Yuuki", "series": "Sword Art Online", "hair": "Chestnut", "role": "Swordswoman", "debut": 2012 },
+    { "name": "Holo", "series": "Spice and Wolf", "hair": "Brown", "role": "Wolf deity", "debut": 2008 },
+    { "name": "Makise Kurisu", "series": "Steins;Gate", "hair": "Red", "role": "Scientist", "debut": 2011 },
+    { "name": "Frieren", "series": "Frieren", "hair": "Silver", "role": "Mage", "debut": 2023 }
+  ]
+}

@@ -1,0 +1,82 @@
+{
+  "settings": {
+    "name": "Exampledle",
+    "description": "A small example game about famous landmarks.",
+    "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Tour%20Eiffel%20Wikimedia%20Commons.jpg?width=800",
+    "version": "1.0.0",
+    "author": "Creatdle",
+    "max_attempts": 10
+  },
+  "items": [
+    {
+      "picture": "https://commons.wikimedia.org/wiki/Special:FilePath/Golden%20Gate%20Bridge%20from%20Battery%20Spencer.jpg?width=800",
+      "name": "Golden Gate Bridge",
+      "country": "United States"
+    },
+    {
+      "picture": "https://commons.wikimedia.org/wiki/Special:FilePath/Tour%20Eiffel%20Wikimedia%20Commons.jpg?width=800",
+      "name": "Eiffel Tower",
+      "country": "France"
+    },
+    {
+      "picture": "https://commons.wikimedia.org/wiki/Special:FilePath/Statue%20of%20Liberty%207.jpg?width=800",
+      "name": "Statue of Liberty",
+      "country": "United States"
+    },
+    {
+      "picture": "https://commons.wikimedia.org/wiki/Special:FilePath/Colosseo%202020.jpg?width=800",
+      "name": "Colosseum",
+      "country": "Italy"
+    },
+    {
+      "picture": "https://commons.wikimedia.org/wiki/Special:FilePath/Big%20Ben%202007-1.jpg?width=800",
+      "name": "Elizabeth Tower",
+      "country": "United Kingdom"
+    },
+    {
+      "picture": "https://commons.wikimedia.org/wiki/Special:FilePath/Sydney%20Opera%20House%20Sails.jpg?width=800",
+      "name": "Sydney Opera House",
+      "country": "Australia"
+    },
+    {
+      "picture": "https://commons.wikimedia.org/wiki/Special:FilePath/Taj%20Mahal%20in%20March%202004.jpg?width=800",
+      "name": "Taj Mahal",
+      "country": "India"
+    },
+    {
+      "picture": "https://commons.wikimedia.org/wiki/Special:FilePath/Christ%20the%20Redeemer%20-%20Cristo%20Redentor.jpg?width=800",
+      "name": "Christ the Redeemer",
+      "country": "Brazil"
+    },
+    {
+      "picture": "https://commons.wikimedia.org/wiki/Special:FilePath/Leaning%20Tower%20of%20Pisa%20-%20panoramio.jpg?width=800",
+      "name": "Leaning Tower of Pisa",
+      "country": "Italy"
+    },
+    {
+      "picture": "https://commons.wikimedia.org/wiki/Special:FilePath/Tower%20Bridge%20London%20Feb%202006.jpg?width=800",
+      "name": "Tower Bridge",
+      "country": "United Kingdom"
+    },
+    {
+      "picture": "https://commons.wikimedia.org/wiki/Special:FilePath/Brandenburger%20Tor%20abends.jpg?width=800",
+      "name": "Brandenburg Gate",
+      "country": "Germany"
+    },
+    {
+      "picture": "https://commons.wikimedia.org/wiki/Special:FilePath/Sagrada%20Familia%2001.jpg?width=800",
+      "name": "Sagrada Familia",
+      "country": "Spain"
+    },
+    {
+      "picture": "https://commons.wikimedia.org/wiki/Special:FilePath/Arc%20de%20Triomphe%20Paris.jpg?width=800",
+      "name": "Arc de Triomphe",
+      "country": "France"
+    },
+    {
+      "picture": "https://commons.wikimedia.org/wiki/Special:FilePath/Empire%20State%20Building%20from%20the%20Top%20of%20the%20Rock.jpg?width=800",
+      "name": "Empire State Building",
+      "country": "United States"
+    }
+  ]
+}
