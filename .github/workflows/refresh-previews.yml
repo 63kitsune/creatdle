@@ -2,6 +2,13 @@ name: Refresh public game previews
 
 on:
   workflow_dispatch:
+    inputs:
+      game_id:
+        description: Optional game UUID to refresh or remove
+        required: false
+        type: string
+  repository_dispatch:
+    types: [refresh-game-preview]
   schedule:
     - cron: "23 */3 * * *"
 
@@ -10,13 +17,14 @@ permissions:
 
 concurrency:
   group: refresh-public-game-previews
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   refresh:
     runs-on: ubuntu-latest
     env:
       PREVIEW_OUTPUT_DIR: .
+      PREVIEW_GAME_ID: ${{ github.event.client_payload.game_id || inputs.game_id || '' }}
       VITE_SUPABASE_URL: https://thklhhpbfngbeixyqbni.supabase.co
       VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_VtNFcZoH_Ya-P388iTd-lg_wIDvXnyL
 
@@ -29,10 +37,10 @@ jobs:
         with:
           node-version: 22
 
-      - name: Install image renderer
+      - name: Install deterministic image renderer
         run: |
           sudo apt-get update
-          sudo apt-get install --yes imagemagick
+          sudo apt-get install --yes librsvg2-bin fonts-dejavu-core
 
       - name: Regenerate public previews and sitemap
         run: node scripts/refresh-previews.mjs
