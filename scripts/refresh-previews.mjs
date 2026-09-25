@@ -1,11 +1,16 @@
 import { execFile } from "node:child_process"
-import { copyFile, mkdir, readFile, rm, unlink, writeFile } from "node:fs/promises"
+import { copyFile, mkdir, readFile, readdir, rm, unlink, writeFile } from "node:fs/promises"
 import { promisify } from "node:util"
 
 const SITE_URL = "https://creatdle.dev"
 const DEFAULT_IMAGE = `${SITE_URL}/social-preview.png`
 const OUTPUT_DIR = process.env.PREVIEW_OUTPUT_DIR || "dist"
+const TARGET_GAME_ID = String(process.env.PREVIEW_GAME_ID || "").trim()
 const execFileAsync = promisify(execFile)
+
+if (TARGET_GAME_ID && !/^[0-9a-f-]{36}$/i.test(TARGET_GAME_ID)) {
+    throw new Error("PREVIEW_GAME_ID must be a UUID.")
+}
 
 function escapeHtml(value) {
     return String(value ?? "")
@@ -166,10 +171,10 @@ async function renderGameCard(game) {
       </defs>
       <g clip-path="url(#card)">${coverImage}<rect width="1200" height="630" fill="url(#shade)"/><rect width="1200" height="630" fill="url(#bottom)"/></g>
       <rect x="2" y="2" width="1196" height="626" rx="36" fill="none" stroke="#454750" stroke-width="4"/>
-      <text x="72" y="248" fill="#58d2ff" font-family="Arial,sans-serif" font-size="25" font-weight="700" letter-spacing="4">CREATDLE · PUBLIC GAME</text>
-      <text x="72" y="${titleY}" fill="#fff" font-family="Arial,sans-serif" font-size="68" font-weight="800" letter-spacing="-2">${title}</text>
-      <text x="74" y="${descriptionY}" fill="#b9bbc3" font-family="Arial,sans-serif" font-size="32">${description}</text>
-      <text x="72" y="558" fill="#fff" font-family="Arial,sans-serif" font-size="27" font-weight="700">${itemCount} item${itemCount === 1 ? "" : "s"} · by ${author}</text>
+      <text x="72" y="248" fill="#58d2ff" font-family="DejaVu Sans,sans-serif" font-size="25" font-weight="700" letter-spacing="4">CREATDLE · PUBLIC GAME</text>
+      <text x="72" y="${titleY}" fill="#fff" font-family="DejaVu Sans,sans-serif" font-size="68" font-weight="800" letter-spacing="-2">${title}</text>
+      <text x="74" y="${descriptionY}" fill="#b9bbc3" font-family="DejaVu Sans,sans-serif" font-size="32">${description}</text>
+      <text x="72" y="558" fill="#fff" font-family="DejaVu Sans,sans-serif" font-size="27" font-weight="700">${itemCount} item${itemCount === 1 ? "" : "s"} · by ${author}</text>
     </svg>`
     const directory = `${OUTPUT_DIR}/previews`
     const source = `${directory}/${safeId}.svg`
@@ -177,12 +182,10 @@ async function renderGameCard(game) {
     await mkdir(directory, { recursive: true })
     await writeFile(source, svg)
     try {
-        await execFileAsync("convert", [
-            "-background", "none",
+        await execFileAsync("rsvg-convert", [
+            "--format=png",
+            "--output", destination,
             source,
-            "-strip",
-            "-define", "png:exclude-chunk=date,time",
-            destination,
         ], { timeout: 20_000 })
         return `${SITE_URL}/previews/${safeId}.png`
     } catch (error) {
@@ -193,13 +196,45 @@ async function renderGameCard(game) {
     }
 }
 
+async function removeGeneratedGame(gameId) {
+    const safeId = String(gameId).replace(/[^a-zA-Z0-9_-]/g, "")
+    if (!safeId) return
+    await rm(`${OUTPUT_DIR}/previews/${safeId}.png`, { force: true })
+
+    const gameRoot = `${OUTPUT_DIR}/g`
+    const entries = await readdir(gameRoot, { withFileTypes: true }).catch(() => [])
+    await Promise.all(entries.filter(entry => entry.isDirectory()).map(async entry => {
+        const directory = `${gameRoot}/${entry.name}`
+        const html = await readFile(`${directory}/index.html`, "utf8").catch(() => "")
+        if (html.includes(`/previews/${safeId}.png`)) {
+            await rm(directory, { recursive: true, force: true })
+        }
+    }))
+}
+
+async function generatedGameUrls() {
+    const gameRoot = `${OUTPUT_DIR}/g`
+    const entries = await readdir(gameRoot, { withFileTypes: true }).catch(() => [])
+    return entries
+        .filter(entry => entry.isDirectory() && /^[a-z0-9][a-z0-9-]{1,63}$/.test(entry.name))
+        .map(entry => `${SITE_URL}/g/${encodeURIComponent(entry.name)}/`)
+        .sort()
+}
+
 const template = await readFile(`${OUTPUT_DIR}/index.html`, "utf8")
 const games = await getPublicGames()
-const sitemapUrls = new Set([`${SITE_URL}/`])
-await rm(`${OUTPUT_DIR}/g`, { recursive: true, force: true })
-await rm(`${OUTPUT_DIR}/previews`, { recursive: true, force: true })
+const gamesToRender = TARGET_GAME_ID
+    ? games.filter(game => String(game.id) === TARGET_GAME_ID)
+    : games
 
-for (const game of games) {
+if (TARGET_GAME_ID) {
+    await removeGeneratedGame(TARGET_GAME_ID)
+} else {
+    await rm(`${OUTPUT_DIR}/g`, { recursive: true, force: true })
+    await rm(`${OUTPUT_DIR}/previews`, { recursive: true, force: true })
+}
+
+for (const game of gamesToRender) {
     const previewImage = await renderGameCard(game)
     const slugs = new Set([game.slug, ...(Array.isArray(game.aliases) ? game.aliases : [])])
     for (const value of slugs) {
@@ -208,10 +243,10 @@ for (const game of games) {
         const directory = `${OUTPUT_DIR}/g/${slug}`
         await mkdir(directory, { recursive: true })
         await writeFile(`${directory}/index.html`, pageForGame(template, game, slug, previewImage))
-        sitemapUrls.add(`${SITE_URL}/g/${encodeURIComponent(slug)}/`)
     }
 }
 
+const sitemapUrls = [`${SITE_URL}/`, ...await generatedGameUrls()]
 const sitemap = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${[...sitemapUrls].map(url => `  <url><loc>${url}</loc></url>`).join("\n")}\n</urlset>\n`
 await writeFile(`${OUTPUT_DIR}/sitemap.xml`, sitemap)
 await writeFile(`${OUTPUT_DIR}/robots.txt`, `User-agent: *\nAllow: /\nSitemap: ${SITE_URL}/sitemap.xml\n`)

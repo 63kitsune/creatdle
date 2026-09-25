@@ -1,0 +1,4 @@
+project_id = "thklhhpbfngbeixyqbni"
+
+[functions.refresh-game-preview]
+verify_jwt = true
