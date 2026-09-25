@@ -76,7 +76,7 @@ async function getPublicGames() {
     const fileEnvironment = await readProductionEnvironment()
     const url = process.env.VITE_SUPABASE_URL || fileEnvironment.VITE_SUPABASE_URL
     const key = process.env.VITE_SUPABASE_PUBLISHABLE_KEY || fileEnvironment.VITE_SUPABASE_PUBLISHABLE_KEY
-    if (!url || !key) return []
+    if (!url || !key) throw new Error("Supabase preview-feed configuration is missing.")
 
     try {
         const response = await fetch(`${url}/rest/v1/rpc/get_public_game_previews`, {
@@ -92,8 +92,7 @@ async function getPublicGames() {
         const games = await response.json()
         return Array.isArray(games) ? games : []
     } catch (error) {
-        console.warn(`Could not generate game preview pages: ${error instanceof Error ? error.message : error}`)
-        return []
+        throw new Error(`Could not load the public-game preview feed: ${error instanceof Error ? error.message : error}`)
     }
 }
 
@@ -189,11 +188,46 @@ async function renderGameCard(game) {
         ], { timeout: 20_000 })
         return `${SITE_URL}/previews/${safeId}.png`
     } catch (error) {
-        console.warn(`Could not render the preview card for ${game.name || game.slug}: ${error instanceof Error ? error.message : error}`)
-        return null
+        throw new Error(`Could not render the preview card for ${game.name || game.slug}: ${error instanceof Error ? error.message : error}`)
     } finally {
         await unlink(source).catch(() => undefined)
     }
+}
+
+function gameSlugs(game) {
+    return [...new Set([game.slug, ...(Array.isArray(game.aliases) ? game.aliases : [])]
+        .map(value => String(value || ""))
+        .filter(slug => /^[a-z0-9][a-z0-9-]{1,63}$/.test(slug)))]
+}
+
+async function reconcileGeneratedFiles(games, targetGameId = "") {
+    const publicIds = new Set(games.map(game => String(game.id)))
+    const publicSlugs = new Set(games.flatMap(gameSlugs))
+    const target = games.find(game => String(game.id) === targetGameId)
+    const targetSlugs = new Set(target ? gameSlugs(target) : [])
+
+    const previewEntries = await readdir(`${OUTPUT_DIR}/previews`, { withFileTypes: true }).catch(() => [])
+    await Promise.all(previewEntries.filter(entry => entry.isFile() && entry.name.endsWith(".png")).map(async entry => {
+        const gameId = entry.name.slice(0, -4)
+        if (!publicIds.has(gameId) || gameId === targetGameId) {
+            await rm(`${OUTPUT_DIR}/previews/${entry.name}`, { force: true })
+        }
+    }))
+
+    const gameEntries = await readdir(`${OUTPUT_DIR}/g`, { withFileTypes: true }).catch(() => [])
+    await Promise.all(gameEntries.filter(entry => entry.isDirectory()).map(async entry => {
+        const directory = `${OUTPUT_DIR}/g/${entry.name}`
+        const html = targetGameId
+            ? await readFile(`${directory}/index.html`, "utf8").catch(() => "")
+            : ""
+        const belongsToTarget = targetGameId && (
+            targetSlugs.has(entry.name)
+            || html.includes(`/previews/${targetGameId}.png`)
+        )
+        if (!publicSlugs.has(entry.name) || belongsToTarget) {
+            await rm(directory, { recursive: true, force: true })
+        }
+    }))
 }
 
 async function removeGeneratedGame(gameId) {
@@ -229,6 +263,7 @@ const gamesToRender = TARGET_GAME_ID
 
 if (TARGET_GAME_ID) {
     await removeGeneratedGame(TARGET_GAME_ID)
+    await reconcileGeneratedFiles(games, TARGET_GAME_ID)
 } else {
     await rm(`${OUTPUT_DIR}/g`, { recursive: true, force: true })
     await rm(`${OUTPUT_DIR}/previews`, { recursive: true, force: true })
@@ -236,10 +271,7 @@ if (TARGET_GAME_ID) {
 
 for (const game of gamesToRender) {
     const previewImage = await renderGameCard(game)
-    const slugs = new Set([game.slug, ...(Array.isArray(game.aliases) ? game.aliases : [])])
-    for (const value of slugs) {
-        const slug = String(value || "")
-        if (!/^[a-z0-9][a-z0-9-]{1,63}$/.test(slug)) continue
+    for (const slug of gameSlugs(game)) {
         const directory = `${OUTPUT_DIR}/g/${slug}`
         await mkdir(directory, { recursive: true })
         await writeFile(`${directory}/index.html`, pageForGame(template, game, slug, previewImage))
