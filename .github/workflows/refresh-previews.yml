@@ -21,7 +21,7 @@ concurrency:
 
 jobs:
   refresh:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       PREVIEW_OUTPUT_DIR: .
       PREVIEW_GAME_ID: ${{ github.event.client_payload.game_id || inputs.game_id || '' }}
@@ -30,10 +30,12 @@ jobs:
 
     steps:
       - name: Check out website
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
+        with:
+          ref: main
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 22
 
@@ -47,12 +49,25 @@ jobs:
 
       - name: Commit generated files
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A -- g previews sitemap.xml robots.txt 404.html
-          if git diff --cached --quiet; then
-            echo "Previews are already current."
-            exit 0
-          fi
-          git commit -m "chore: refresh public game previews"
-          git push
+          git config --local user.name "63kitsune"
+          git config --local user.email "63kitsune@users.noreply.github.com"
+          for attempt in 1 2 3; do
+            git add -A -- g previews sitemap.xml robots.txt 404.html
+            if git diff --cached --quiet; then
+              echo "Previews are already current."
+              exit 0
+            fi
+            git commit -m "chore: refresh public game previews"
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              echo "Could not publish previews after three attempts."
+              exit 1
+            fi
+            # Another publisher may have updated main during rendering.
+            # Start from that commit and regenerate to avoid binary conflicts.
+            git fetch origin main
+            git checkout --detach FETCH_HEAD
+            node scripts/refresh-previews.mjs
+          done
