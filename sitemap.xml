@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://creatdle.dev/</loc></url>
+  <url><loc>https://creatdle.dev/privacy/</loc></url>
+  <url><loc>https://creatdle.dev/terms/</loc></url>
+  <url><loc>https://creatdle.dev/cookies/</loc></url>
+  <url><loc>https://creatdle.dev/legal/</loc></url>
   <url><loc>https://creatdle.dev/g/isekaidle/</loc></url>
   <url><loc>https://creatdle.dev/g/isekaimc/</loc></url>
 </urlset>
