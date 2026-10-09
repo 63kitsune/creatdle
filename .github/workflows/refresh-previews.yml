@@ -45,7 +45,7 @@ jobs:
           sudo apt-get install --yes librsvg2-bin fonts-dejavu-core
 
       - name: Regenerate public previews and sitemap
-        run: node scripts/refresh-previews.mjs
+        run: node .github/scripts/refresh-previews.mjs
 
       - name: Commit generated files
         run: |
@@ -69,5 +69,5 @@ jobs:
             # Start from that commit and regenerate to avoid binary conflicts.
             git fetch origin main
             git checkout --detach FETCH_HEAD
-            node scripts/refresh-previews.mjs
+            node .github/scripts/refresh-previews.mjs
           done
