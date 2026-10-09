@@ -45,12 +45,12 @@ jobs:
           sudo apt-get install --yes librsvg2-bin fonts-dejavu-core
 
       - name: Regenerate public previews and sitemap
-        run: node scripts/refresh-previews.mjs
+        run: node .github/scripts/refresh-previews.mjs
 
       - name: Commit generated files
         run: |
           git config --local user.name "63kitsune"
-          git config --local user.email "63kitsune@users.noreply.github.com"
+          git config --local user.email "noreply@creatdle.dev"
           for attempt in 1 2 3; do
             git add -A -- g previews sitemap.xml robots.txt 404.html
             if git diff --cached --quiet; then
@@ -69,5 +69,5 @@ jobs:
             # Start from that commit and regenerate to avoid binary conflicts.
             git fetch origin main
             git checkout --detach FETCH_HEAD
-            node scripts/refresh-previews.mjs
+            node .github/scripts/refresh-previews.mjs
           done
